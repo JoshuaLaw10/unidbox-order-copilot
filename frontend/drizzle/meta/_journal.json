@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1769826999804,
+      "tag": "0000_long_baron_strucker",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1769827282954,
+      "tag": "0001_even_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769829181777,
+      "tag": "0002_peaceful_grandmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1769833262789,
+      "tag": "0003_nice_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1769834724714,
+      "tag": "0004_flawless_ronan",
+      "breakpoints": true
+    }
+  ]
+}
