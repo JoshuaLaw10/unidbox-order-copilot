@@ -19,12 +19,36 @@ Order Copilot introduces an **intent-first ordering workflow**. Instead of forci
 - **WhatsApp integration** for seamless dealer communication
 - **Email notifications** for order lifecycle events
 - **Scalable, web-based workflow** designed for real-world deployment
+- **Amazon-style dealer portal** with product catalog and cart functionality
 
 ## Repository Structure
 
 ```
 unidbox-order-copilot/
-├── backend/                           # 🆕 Python Backend Modules
+├── frontend/                          # 🆕 React Web Application
+│   ├── client/                        # Frontend React app
+│   │   ├── src/
+│   │   │   ├── pages/                 # Page components
+│   │   │   │   ├── Home.tsx           # Landing page with inquiry form
+│   │   │   │   ├── PublicCatalog.tsx  # Product catalog with cart
+│   │   │   │   ├── PublicOrder.tsx    # Order placement page
+│   │   │   │   ├── TrackOrder.tsx     # Order tracking by email
+│   │   │   │   └── AdminDashboard.tsx # Staff admin portal
+│   │   │   ├── components/            # Reusable UI components
+│   │   │   │   ├── Header.tsx         # Site header with navigation
+│   │   │   │   └── Footer.tsx         # Site footer
+│   │   │   └── lib/
+│   │   │       ├── trpc.ts            # tRPC client
+│   │   │       └── pythonApi.ts       # Python backend integration
+│   │   └── public/                    # Static assets
+│   ├── server/                        # tRPC backend
+│   │   ├── routers.ts                 # API procedures
+│   │   ├── db.ts                      # Database helpers
+│   │   └── agents.ts                  # AI agent implementations
+│   ├── drizzle/                       # Database schema
+│   └── README.md                      # Frontend documentation
+│
+├── backend/                           # Python Backend Modules
 │   ├── ai/                            # AI Intent Parsing
 │   │   ├── intent_parser.py           # Parse natural language to structured intents
 │   │   ├── product_matcher.py         # Fuzzy match products from catalog
@@ -71,6 +95,21 @@ unidbox-order-copilot/
 ```
 
 ## 🚀 Quick Start
+
+### Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+```
+
+The frontend will be available at `http://localhost:3000`.
 
 ### Backend Setup
 
@@ -237,36 +276,86 @@ Automatically generates professional DO documents:
 | Fanco | 7 |
 | Makita | 6 |
 
-## 🔧 Integration with Frontend
+## 🌐 Frontend Features
 
-### For Manus Web App Integration
+### Dealer Portal (Public)
 
-The backend API is designed to integrate with the Manus web application. To connect:
+- **Product Catalog**: Browse 160+ products with category filters and search
+- **AI Chatbot**: Natural language order processing assistant
+- **Shopping Cart**: Add products and place orders without login
+- **Order Tracking**: Track orders by email address
+- **Delivery Orders**: Download PDF delivery documents
 
-1. **Set API URL**: Configure `VITE_API_URL` in frontend to point to this backend
-2. **Chat Integration**: Use `/api/chat` endpoint for AI chatbot
-3. **Products**: Use `/api/products` for catalog browsing
-4. **Orders**: Use `/api/orders` for checkout flow
+### Staff Portal (Admin)
 
-### Example tRPC Integration
+- **Order Management**: View, filter, and process orders
+- **Product Management**: Edit prices, stock, and lead times
+- **DO History**: Access all generated delivery orders
+- **Analytics**: Order statistics and trends
+
+### Demo Access
+
+| Portal | URL | Credentials |
+|--------|-----|-------------|
+| Dealer Portal | `/` | No login required |
+| Staff Portal | `/staff/login` | admin@demo.com / admin123 |
+
+## 🔧 Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Dealer Channels                          │
+├─────────────────┬─────────────────┬─────────────────────────────┤
+│   Web Portal    │    WhatsApp     │         Email               │
+│  (React/tRPC)   │   (Webhook)     │       (Inbound)             │
+└────────┬────────┴────────┬────────┴────────────┬────────────────┘
+         │                 │                      │
+         ▼                 ▼                      ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      API Gateway                                 │
+│              (tRPC + FastAPI Python Backend)                    │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         ▼                   ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│   AI Module     │ │  Order Service  │ │  DO Generator   │
+│ (Intent Parse)  │ │  (CRUD + Logic) │ │  (PDF Output)   │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+```
+
+### Python Backend Integration
+
+The frontend includes an API integration layer (`frontend/client/src/lib/pythonApi.ts`) for connecting to the Python backend:
 
 ```typescript
-// In server/routers.ts
-export const aiRouter = router({
-  chat: publicProcedure
-    .input(z.object({ message: z.string(), sessionId: z.string().optional() }))
-    .mutation(async ({ input }) => {
-      const response = await fetch(`${process.env.AI_BACKEND_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input.message, session_id: input.sessionId })
-      });
-      return response.json();
-    })
+import { sendChatMessage, searchProducts, createOrder } from '@/lib/pythonApi';
+
+// Chat with AI assistant
+const response = await sendChatMessage({
+  message: "I need 5 ceiling fans and 3 range hoods",
+  session_id: "user-123"
+});
+
+// Search products
+const results = await searchProducts({
+  query: "ceiling fan",
+  brand: "Fanco"
 });
 ```
 
 ## 📋 Environment Variables
+
+### Frontend (.env)
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | Database connection string | Yes |
+| `JWT_SECRET` | JWT signing secret | Yes |
+| `RESEND_API_KEY` | Resend email API key | For Email |
+| `VITE_PYTHON_API_URL` | Python backend URL | For AI |
+
+### Backend (.env)
 
 | Variable | Description | Required |
 |----------|-------------|----------|
@@ -291,10 +380,12 @@ See `backend/.env.example` for complete list.
 - [x] **Email Notification Module**
 - [x] **Delivery Order PDF Generation**
 - [x] **REST API Endpoints**
+- [x] **React Web Application (Dealer Portal)**
+- [x] **Admin Dashboard for Order Validation**
+- [x] **Email Notifications via Resend**
 - [ ] Scrape complete catalog (currently 160/800 products)
-- [ ] Build Order Copilot web interface
-- [ ] Admin dashboard for order validation
 - [ ] Database integration for order persistence
+- [ ] Production deployment
 
 ## Data Sources
 
